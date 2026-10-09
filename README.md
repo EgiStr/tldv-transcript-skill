@@ -79,6 +79,17 @@ skills/tldv-transcript/
    real gaps; a row-by-row fingerprint diff against the browser data caught a
    one-character typo that a row count passed.
 
+## Prefer a Chrome extension?
+
+There is a companion extension that performs the same extraction without an
+agent or a browser MCP:
+
+**https://github.com/EgiStr/tldv-transcript-extension**
+
+Same DOM knowledge, packaged as a one-click popup. Use the skill when you want
+the transcript processed or filed as part of a larger agent task; use the
+extension when you just want the file.
+
 ## Caveat
 
 Output is **auto-generated caption text**. Expect misheard names and
