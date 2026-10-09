@@ -51,6 +51,51 @@ Each of these consumed real time before being ruled out:
 - **Inflating the container** — `max-height: 6000px` and clearing inline styles
   did not increase the rendered block count. Reverted.
 
+## Array yang terlihat seperti data, tapi bukan — WAJIB DIBACA
+
+Tiga hal di DOM ini menghasilkan transkrip yang **tampak sah tapi salah**, tanpa
+error apapun. Semuanya ditemukan dengan membandingkan output nyata terhadap
+baseline yang sudah terverifikasi, bukan dengan membaca markup.
+
+| Terlihat seperti | Sebenarnya | Akibat kalau salah |
+| --- | --- | --- |
+| `data-word` | **nomor urut kata** (`"3329"`, `"3330"`, …) | Isi transkrip jadi `0 1 2 3 … 9338`. Markdown-nya valid, row count-nya benar, isinya sampah total. |
+| `data-speaker` | **boolean** (`"true"`/`"false"`) | Semua blok berlabel `true`; tally speaker jadi 1 orang. |
+| teks dari `textContent` yang digabung | kata bertanda hubung **dipecah ke beberapa span** | `web-bob` menjadi `web -bob`; `benar-benar` menjadi `benar -benar`. |
+
+### Yang benar
+
+- **Teks kata**: pakai `span.textContent`, **bukan** `data-word`.
+- **Nama speaker**: label berbentuk `"33:10 m_fh_n_x: "` di `textContent` span
+  pertama, dan `innerText` span pertama berisi namanya saja (`"m_fh_n_x"`).
+- **Teks blok**: pakai `p.innerText`, lalu pisahkan nama di baris pertama
+  (`"m_fh_n_x\npas maka web-bob benar-benar"`). `innerText` sudah menangani
+  penggabungan tanda hubung dengan benar; `textContent` yang di-join tidak bisa.
+
+### Timestamp: TRUNCATE, jangan dibulatkan
+
+tl;dv memakai **floor**, bukan round atau ceil. Diverifikasi langsung di halaman:
+
+| `data-time` | label tl;dv | floor | ceil |
+| --- | --- | --- | --- |
+| 16896 ms | **00:16** | 16 ✓ | 17 ✗ |
+| 46336 ms | **00:46** | 46 ✓ | 47 ✗ |
+| 51744 ms | **00:52** | 52 ✓ | 53 ✗ |
+| 89344 ms | **01:29** | 89 ✓ | 90 ✗ |
+
+Kalau memakai round/ceil, **semua** timestamp bergeser 1 detik dari UI yang
+dibandingkan user — terlihat seperti bug data padahal hanya pembulatan.
+
+### Peringatan soal verifikasi
+
+Perbandingan **row count saja tidak cukup**. Ketiga bug di atas semuanya
+menghasilkan jumlah baris yang benar. Yang menangkapnya adalah:
+
+1. Bandingkan **panjang teks tiap baris**, bukan hanya jumlahnya.
+2. Bandingkan **teks karakter-per-karakter**, bukan hanya panjangnya.
+3. Bandingkan **tally speaker**; jumlah speaker = 1 itu tanda `data-speaker` dibaca salah.
+4. Cek apakah isi transkrip **hanya berisi angka** — sidik jari `data-word` dibaca sebagai teks.
+
 ## Working technique
 
 ```js
